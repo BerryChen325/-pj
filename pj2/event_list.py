@@ -64,8 +64,6 @@ class event_list:
 
     def remove_timer(self):
         q = self.head
-        # 下面的修改是错的，还是应该用原来的remove_timer
-        # 因为发送方只用一个计时器（不是每个pkt有一个计时器），计时器计的是最早的已发送但未ACK的包的时
         while (q.evtype != "TIMER_INTERRUPT"):
             q = q.next
 
@@ -77,20 +75,6 @@ class event_list:
             q.next.prev = q.prev
             q.prev.next = q.next
         
-        # 原先给的remove_timer是错的。超时重传时应该清空原有的所有timer，而不是只清空一个timer
-        # （因为重传时是把所有尚未ack的包都重传了，所以所有timer都要更新！）
-        # 下面是我修改后的remove_timer，清空所有timer
-        # while (q != None):
-        #     if (q.evtype == "TIMER_INTERRUPT"):
-        #         if q.prev == None:
-        #             self.head = q.next
-        #         elif q.next == None:
-        #             q.prev.next = None
-        #         else:
-        #             q.next.prev = q.prev
-        #             q.prev.next = q.next
-        #     q = q.next
-
     # 加的，判断是否已经有客户端AorB的计时器在工作
     # 因为这里只模拟A到B发包，所以只有A有timer，所以AorB肯定是A，
     # 这里为了方便就不做相应的判断了（也就不作为参数传入函数了）

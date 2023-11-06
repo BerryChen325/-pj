@@ -16,13 +16,6 @@ class circular_buffer:
         else:
             self.buffer[self.write]=pkt
 
-        # # 加的，更新next_unsent
-        # if self.write <= (self.read+self.N)%self.max:
-        #     # buffer中原先的包填不满buffer。说明unsent一定要更新到新加入的pkt的位置
-        #     # 注：这是因为只要window中出现了未发送的包（无论是因为layer5来了新的包还是因为收到ACK发生窗口滑动），
-        #     # 一定会立即处理把window中的包全部发出去。
-        #     # 所以发生push之前，unsent始终处于window中最后一个包的后一个位置上
-        #     self.next_unsent = self.write
         self.write=(self.write+1)% self.max
         self.count=self.count+1
         # 不需要更新next_unsent，原因是：
@@ -68,33 +61,25 @@ class circular_buffer:
     
     # 返回window中第一个未发送的pkt，并更新next_unsent位置【因为返回的pkt一定会被A发送出去（layer5发来新包或收到ACK）】
     def next_unsent_pkt_in_window(self):
-        if self.buffer_has_unsent():
+        if self.window_has_unsent():
             temp = self.buffer[self.next_unsent]
+            # print("[next_unsent_pkt_in_window: next_unsent={}]".format(self.next_unsent))
             self.next_unsent = (self.next_unsent+1) % self.max
             return temp
         else:
+            # print("[next_unsent_pkt_in_window: next_unsent={}]".format(self.next_unsent))
             return None
-
-    # def update_next_unsent(self):
-    #     self.next_unsent = (self.next_unsent+1) % self.max
     
-    def buffer_has_unsent(self):
-        return self.next_unsent < (self.read + self.N) % self.max
+    def window_has_unsent(self):
+        # print("[window_has_unsent: next_unsent={}]".format(self.next_unsent))
+        return self.next_unsent < min(self.read + self.N, self.write) % self.max
 
     # 返回window中所有pkt，并更新next_unsent位置【因为返回的列表中所有pkt都会被A发送出去（超时重传）】
     def read_window(self):
         temp=[]
         read=self.read
-        for i in range(self.N):
-            if self.buffer[read] == None:
-                break
+        for i in range(min(self.N, (self.write-self.read+self.max)%self.max)):
             temp.append(self.buffer[read])
             read=(read+1)%self.max
         self.next_unsent = read     # 其实似乎不用更新，因为temp里的所有pkt一定都是已经发送过的（因为所有出现新包的情况都会被“及时处理”）
         return temp
-    
-    # def next_unsent_in_buffer(self):
-    #     if self.read <= self.write:
-    #         return self.read <= self.next_unsent < self.write
-    #     else:
-    #         return self.read <= self.next_unsent < self.write + self.max

@@ -24,16 +24,18 @@ class B:
         if pkt.checksum == pkt.get_checksum() and pkt.seqnum == self.seqnum:
             # Packet is not corrupted and is the expected one
             # to_layer_five("B", pkt)
+            print("B收到pkt: seqnum={}".format(pkt.seqnum))
             send_data("B", pkt)
             send_ack("B", self.seqnum)
             self.seqnum = pkt.seqnum + 1
-            print("B收到pkt: seqnum={}".format(pkt.seqnum))
             # print("//B.seqnum = {}".format(self.seqnum))
         else:
             # Packet is corrupted or not the expected one, send an ACK for the last correctly received packet
-            send_ack("B", self.seqnum - 1)
             if pkt.checksum != pkt.get_checksum():
                 print("B收到pkt但checksum error: seqnum={}".format(pkt.seqnum))
+            else:
+                print("B收到pkt: seqnum={}".format(pkt.seqnum))
+            send_ack("B", self.seqnum - 1)
         
     def B_timerinterrupt(self):
         return

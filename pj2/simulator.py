@@ -82,8 +82,9 @@ class simulator:
 
 
 def to_layer_three(AorB, pkt):
+    log_message = "{}: packet sent: seqnum={}, acknum={}".format(AorB, pkt.seqnum, pkt.acknum)
     if random.uniform(0, 1) < sim.lossprob:
-        print("pkt丢失: {}, seqnum={}, acknum={}".format(AorB, pkt.seqnum, pkt.acknum))
+        print(log_message+" [包丢失]")
         return
 
     packet = copy.deepcopy(pkt)
@@ -94,7 +95,8 @@ def to_layer_three(AorB, pkt):
             packet.payload.data = packet.payload.data[0:-1] + "1"
         else:
             packet.seqnum=-1
-        print("pkt出错: {}, seqnum={}, acknum={}".format(AorB, pkt.seqnum, pkt.acknum))
+        log_message += " [包出错]"
+        # print(log_message+" [包出错]")
 
     q = sim.envlist.head
     lasttime = sim.time
@@ -109,8 +111,7 @@ def to_layer_three(AorB, pkt):
         sim.envlist.insert(event(eventime, "FROM_LAYER3", "B", packet))
     else:
         sim.envlist.insert(event(eventime, "FROM_LAYER3", "A", packet))
-    print("{}: packet sent: seqnum={}, acknum={}".format(AorB, pkt.seqnum, pkt.acknum))
-
+    print(log_message)
 
 def to_layer_five(AorB, data):
     # 应当是向layer five传输数据的相关处理（模拟中不考虑这部分）
